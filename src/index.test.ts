@@ -3,33 +3,6 @@ import { pipe } from 'fp-ts/lib/function.js'
 import * as E from "fp-ts/lib/Either.js" 
 import * as Is from "./index.js"
 
-//const viewErrValue:
-//    (err: Is.ErrValue) =>
-//    string =
-//    err =>
-//    `Is Err with value ${err.givenValue} but expected ${err.expectedValues}`
-//
-//const viewErrField:
-//    (err: Is.ErrField) =>
-//    string =
-//    err =>
-//    `Is Err at ${err.fieldName} with value ${err.givenValue}`
-//
-//const viewErr:
-//    (err: Is.Err) =>
-//    string =
-//    err => {
-//        switch(err.name) {
-//            case "ErrValue":
-//                return viewErrValue(err)
-//            case "ErrField":
-//                return viewErrField(err)
-//            default:
-//                return "Error in viewErr"
-//        
-//        }
-//    }
-
 type There = "there" | "their"
 
 const thereGood1 = "there"
@@ -62,7 +35,7 @@ const isHello:
     a =>
     pipe(
         a,
-        Is.checkFieldValues("name")(["Hello", "Hola"]) 
+       Is.checkField("name")(Is.checkValues(["Hello","Hola"]))
     )
 
 type NumType = number
@@ -70,21 +43,18 @@ type NumType = number
 const numGood1 = 5
 const numBad = "hello"
 
-type World = {
-    name: "World" | "Worlds"
-    value: number,
-    hello: Hello,
-    th: There,
-    tm1: number[],
-    tm2: There[],
-}
 
-const worldGood1 = {
-    name: "World",
-    value: 5,
-    hello: { name: "Hello" },
-    th: "there",
-}
+type ArrayType = number[]
+
+const arrayGood1 = [1, 2]
+const arrayGood2: number[] = []
+const arrayBad1 =  ["hello", 1]
+
+type SetType = Set<string>
+
+const setGood1 = new Set(["hello", "there"])
+const setGood2 = new Set([])
+const setBad1 = new Set([1, "hello"])
 
 describe("Single Value Tests", () => {
     it("There success", () => {
@@ -154,6 +124,74 @@ describe("Checking the type", () => {
            E.match(
                 () => expect(true).to.equal(true),
                 () => expect.fail('should not succeed'),
+           )
+        )
+    })
+})
+
+
+describe("Array checking", () => {
+    it("numeric array -> pass", () => {
+        pipe(
+            arrayGood1,
+           Is.checkArray(Is.checkType("number")),
+           E.match(
+                () => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+           )
+        )
+    })
+    it("empty numeric array -> pass", () => {
+        pipe(
+            arrayGood2,
+           Is.checkArray(Is.checkType("number")),
+           E.match(
+                () => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+           )
+        )
+    })
+    it("string in array -> fail", () => {
+        pipe(
+            arrayBad1,
+           Is.checkArray(Is.checkType("number")),
+           E.match(
+                () => expect(true).to.equal(true),
+                () => expect.fail('fail'),    
+           )
+        )
+    })
+})
+
+
+describe("Set chcker", () => {
+    it("All strings -> pass", () => {
+        pipe(
+            setGood1,
+           Is.checkSet(Is.checkType("string")),
+           E.match(
+                () => expect.fail('fail'),
+                () => expect(true).to.equal(true)
+           )
+        )
+    })
+    it("empty array -> pass", () => {
+        pipe(
+            setGood2,
+           Is.checkSet(Is.checkType("string")),
+           E.match(
+                () => expect.fail('fail'),
+                () => expect(true).to.equal(true)
+           )
+        )
+    })
+    it("numeric array -> fail", () => {
+        pipe(
+            setBad1,
+           Is.checkSet(Is.checkType("string")),
+           E.match(
+                () => expect(true).to.equal(true),
+                () => expect.fail('fail'),
            )
         )
     })

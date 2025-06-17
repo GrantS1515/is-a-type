@@ -2,15 +2,9 @@ import * as Op from "fp-ts/lib/Option.js"
 import { pipe } from 'fp-ts/lib/function.js' 
 import * as E from "fp-ts/lib/Either.js" 
 import * as B from "fp-ts/lib/boolean.js"
-//make more general purpose then string
-// multiple acceptance values
-// convert to either
-
-export type ErrField = {
-    name: "ErrField",
-    fieldName: string,
-    givenValue: any,
-}
+import * as A from "fp-ts/lib/Array.js"
+import * as M from "fp-ts/lib/Monoid.js"
+import * as St from "fp-ts/lib/Set.js"
 
 export type ErrValue = {
     name: "ErrValue",
@@ -24,8 +18,9 @@ export type ErrType = {
     expectedValueType: CType,
 }
 
-export type Err = ErrField | ErrValue | ErrType
+export type Err = ErrValue | ErrType
 
+// check a set of values defined in the type
 export const checkValues:
     (vals: any[]) =>
     (a: any) =>
@@ -39,21 +34,9 @@ export const checkValues:
         )
     ) 
     
-export const checkFieldValues:
-    (key: string) =>
-    (vals: any[]) =>
-    (obj: any) =>
-    E.Either<ErrField, any> = 
-     key =>
-     vals =>
-     obj => pipe(
-        obj[key], 
-        checkValues(vals),
-        E.mapLeft(() => ({ name: "ErrField", fieldName: key, givenValue: obj[key] }))
-    )
-
 type CType = "string" | "number" | "boolean"
 
+// check for the standard base types
 export const checkType:
     (cType: CType) =>
     (val: any) =>
@@ -68,8 +51,9 @@ export const checkType:
         )
     )
 
-type Check = (a: any) => E.Either<Err, any>
+export type Check = (a: any) => E.Either<Err, any>
     
+// check a field of an object
 export const checkField:
     (key: string) =>
     (checker: Check) =>
@@ -84,79 +68,42 @@ export const checkField:
         E.map(() => obj)
     )
 
-//type Hello = {
-//    name: "Hello",
-//}
-//
-//const checkHelloName:
-//    (key: string) =>
-//    (a: any) =>
-//    Op.Option<any> =
-//    key =>
-//    a =>
-//    a[key] === "Hello" ? Op.some(a) : Op.none
-//
-//const isHello:
-//    (a: any) =>
-//    Op.Option<Hello> =
-//    a => pipe(
-//        a,
-//        checkHelloName("name"), 
-//    )
-//    
-//const hello1 = {
-//    name: "Hello",
-//}
-//
-//console.log(isHello(hello1))
-////console.log(isHello('hello1'))
-//
-//type There = "there" | "their"
-//
-//const checkThere:
-//    (a: any) =>
-//    Op.Option<any> =
-//    a =>
-//    a === "there" || a === "their" ? Op.some(a) : Op.none
-//
-//const isThere: 
-//    (a: any) =>
-//    Op.Option<There> =
-//    a => pipe(
-//        a,
-//        checkThere 
-//    )
-//
-//type World = {
-//    name: "World"
-//    th: There
-//}
-//
-//const checkStrValue:
-//    (key: string) =>
-//    (target: string) =>
-//    (a: any) =>
-//    Op.Option<any> =
-//    key =>
-//    target =>
-//    a =>
-//    a[key] === target ? Op.some(a) : Op.none
-//
-//const checkOutsideIs:
-//   (key: string) =>
-//    (isFn: ( a: any ) => Op.Option<any>) =>
-//    (a: any) =>
-//    Op.Option<any> =
-//    key =>
-//    isFn =>
-//    a =>
-//    isFn(a[key])
-//
-//const isWorld:
-//    (a: any) =>
-//    Op.Option<World> =
-//    a => pipe(
-//        a,
-//        checkStrValue("name")("World"),
-//        Op.chain(checkOutsideIs("there")(isThere))
-//    )
+const eMonoid: M.Monoid<E.Either<Err,any>> = {
+    concat: (a: E.Either<Err,any>, b: E.Either<Err, any>) => {
+        if ( E.isLeft(a) ) {
+            return a
+        } else  if ( E.isLeft(b) ){
+            return b 
+        } else {
+            return a 
+        }
+    },
+
+    empty: E.right("Empty")
+}
+
+// check an array
+export const checkArray:
+    (checker: Check) =>
+    (arr: any) =>
+    E.Either<Err, any> =
+    checker =>
+    arr =>
+    pipe(
+       arr,
+       A.foldMap(eMonoid)(checker),
+       E.map(() => arr),
+    )
+
+// check a set
+export const checkSet:
+    (checker: Check) =>
+    (st: any) =>
+    E.Either<Err, any> =
+    checker =>
+    st =>
+    pipe(
+        st,
+        Array.from,
+        checkArray(checker)
+    )
