@@ -56,6 +56,36 @@ const setGood1 = new Set(["hello", "there"])
 const setGood2 = new Set([])
 const setBad1 = new Set([1, "hello"])
 
+type Example = {
+    name: "Example",
+    value: number
+}
+
+const exGood1 = {
+    name: "Example",
+    value: 1,
+}
+
+const exBad1 = {
+    name: "ex",
+    value: 1,
+}
+
+const exBad2 = {
+    name: "Example",
+    value: "hello"
+}
+
+const isExample:
+    (a: any) =>
+    E.Either<Is.Err, Example> =
+    a =>
+   pipe(
+       a,
+       Is.checkField("name")(Is.checkValues(["Example"])),
+       E.chain( Is.checkField("value")(Is.checkType("number")) ),
+   ) 
+
 describe("Single Value Tests", () => {
     it("There success", () => {
         pipe(
@@ -193,6 +223,40 @@ describe("Set chcker", () => {
                 () => expect(true).to.equal(true),
                 () => expect.fail('fail'),
            )
+        )
+    })
+})
+
+
+describe("Example of multiple fields that need to pass", () => {
+    it("valid structure -> pass", () => {
+        pipe(
+            exGood1,
+            isExample,
+            E.match(
+                () => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+            )            
+        )
+    })
+    it("invalid structure -> fail", () => {
+        pipe(
+            exBad1,
+            isExample,
+            E.match(
+                () => expect(true).to.equal(true),
+                () => expect.fail('fail'),
+            )            
+        )
+    })
+    it("invalid structure -> fail", () => {
+        pipe(
+            exBad2,
+            isExample,
+            E.match(
+                () => expect(true).to.equal(true),
+                () => expect.fail('fail'),
+            )            
         )
     })
 })
