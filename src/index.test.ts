@@ -401,3 +401,21 @@ describe("Determine if an set of cerain type values", () => {
         )
     })
 })
+
+//const oSomeNum = Op.some(1)
+//const oNone = Op.none
+//const o1 = {a: 1}
+//const o2 = [1,2]
+//
+//describe("Check if the value is an option", () => {
+//    it("op some -> true", () => {
+//        pipe(
+//            oSomeNum,
+//           Is._isSomeOp, 
+//           E.match(
+//                ()  => expect.fail('fail'),
+//                () => expect(true).to.equal(true),
+//           )
+//        )
+//    })
+//})
