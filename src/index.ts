@@ -12,45 +12,29 @@ export type ErrValue = {
     expectedValues: any[],
 }
 
-//export const errValue2String:
-//    (e: ErrValue) =>
-//    string =
-//    e =>
-//    `Err in the value expected. Given ${e.givenValue} but expecting ${e.expectedValues}`
-//
 export type ErrType = {
     name: "ErrType",
     givenValue: any,
     expectedValueType: CType,
 }
-//
-//export const errType2String:
-//    (e: ErrType) =>
-//    string =
-//    e =>
-//    `Err in the type expected. Given ${e.givenValue} but expecting ${e.expectedValueType}`
-//
-export type Err = ErrValue | ErrType
-//
-//export const err2String:
-//    (e: Err) =>
-//    string =
-//    e => {
-//        switch(e.name) {
-//            case "ErrValue":
-//               return errValue2String(e) 
-//            case "ErrType":
-//                return errType2String(e)
-//            default:
-//                return "Error in conversion to string"
-//        } 
-//    }
+
+export type NotArrayErr = {
+    name: "NotArrayErr",
+    given: any,
+}
+
+export type NotSetErr = {
+    name: "NotSetErr",
+    given: any,
+}
+
+export type Err = ErrValue | ErrType | NotArrayErr | NotSetErr
 
 // check a set of values defined in the type
 export const checkValues:
-    (vals: any[]) =>
-    (a: any) =>
-    E.Either<ErrValue, any> =
+    (vals: (string | number | boolean)[]) =>
+    (a: string | number | boolean) =>
+    E.Either<ErrValue, string | number | boolean> =
     vals =>
     a => pipe(
         vals.includes(a),
@@ -66,7 +50,7 @@ type CType = "string" | "number" | "boolean"
 export const checkType:
     (cType: CType) =>
     (val: any) =>
-    E.Either<ErrType, any> =
+    E.Either<ErrType, string | number | boolean> =
     cType => 
     val =>
     pipe(
@@ -109,7 +93,7 @@ const eMonoid: M.Monoid<E.Either<Err,any>> = {
 }
 
 // check an array
-export const checkArray:
+export const _checkArray:
     (checker: Check) =>
     (arr: any[]) =>
     E.Either<Err, any> =
@@ -122,7 +106,7 @@ export const checkArray:
     )
 
 // check a set
-export const checkSet:
+export const _checkSet:
     (checker: Check) =>
     (st: Set<any>) =>
     E.Either<Err, any> =
@@ -131,5 +115,61 @@ export const checkSet:
     pipe(
         st,
         Array.from,
-        checkArray(checker)
+        _checkArray(checker),
+        E.match(
+            (e) => E.left(e),
+            () => E.right(st)
+        )
+    )
+
+
+export const _isArray:
+    (a: any) =>
+    E.Either<NotArrayErr, any[]> =
+    a =>
+    pipe(
+        a,
+        Array.isArray,
+        B.match(
+            () => E.left({name: 'NotArrayErr', given: a}),
+            () => E.right(a),
+        )
+    )
+
+    
+export const _isSet:
+    (a: any) =>
+    E.Either<NotSetErr, Set<any>> =
+    a =>
+    pipe(
+        a instanceof Set,
+        B.match(
+            () => E.left({name: 'NotSetErr', given: a}),
+            () => E.right(a),
+        )
+    )
+
+
+export const isArrayWith:
+    (check: Check) =>
+    (a: any) =>
+    E.Either<Err, any[]> =
+    check =>
+    a =>
+    pipe(
+        a,
+       _isArray,
+      E.chain(_checkArray(check)),
+    )
+
+export const isSetWith:
+    (check: Check) =>
+    (a: any) =>
+    E.Either<Err, Set<any>> =
+    check =>
+    a =>
+    pipe(
+        a,
+       _isSet,
+      E.chain(_checkSet(check))
     )

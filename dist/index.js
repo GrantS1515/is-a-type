@@ -2,20 +2,6 @@ import { pipe } from 'fp-ts/lib/function.js';
 import * as E from "fp-ts/lib/Either.js";
 import * as B from "fp-ts/lib/boolean.js";
 import * as A from "fp-ts/lib/Array.js";
-//
-//export const err2String:
-//    (e: Err) =>
-//    string =
-//    e => {
-//        switch(e.name) {
-//            case "ErrValue":
-//               return errValue2String(e) 
-//            case "ErrType":
-//                return errType2String(e)
-//            default:
-//                return "Error in conversion to string"
-//        } 
-//    }
 // check a set of values defined in the type
 export const checkValues = vals => a => pipe(vals.includes(a), B.match(() => E.left(({ name: "ErrValue", givenValue: a, expectedValues: vals })), () => E.right(a)));
 // check for the standard base types
@@ -37,6 +23,10 @@ const eMonoid = {
     empty: E.right("Empty")
 };
 // check an array
-export const checkArray = checker => arr => pipe(arr, A.foldMap(eMonoid)(checker), E.map(() => arr));
+export const _checkArray = checker => arr => pipe(arr, A.foldMap(eMonoid)(checker), E.map(() => arr));
 // check a set
-export const checkSet = checker => st => pipe(st, Array.from, checkArray(checker));
+export const _checkSet = checker => st => pipe(st, Array.from, _checkArray(checker), E.match((e) => E.left(e), () => E.right(st)));
+export const _isArray = a => pipe(a, Array.isArray, B.match(() => E.left({ name: 'NotArrayErr', given: a }), () => E.right(a)));
+export const _isSet = a => pipe(a instanceof Set, B.match(() => E.left({ name: 'NotSetErr', given: a }), () => E.right(a)));
+export const isArrayWith = check => a => pipe(a, _isArray, E.chain(_checkArray(check)));
+export const isSetWith = check => a => pipe(a, _isSet, E.chain(_checkSet(check)));

@@ -14,7 +14,9 @@ const isThere:
     a =>
     pipe(
         a,
-        Is.checkValues(["there", "their"]) 
+        Is.checkValues(["there", "their"]),
+        E.map((s:There)=> s)
+        
     )
 
 type Hello = {
@@ -164,7 +166,7 @@ describe("Array checking", () => {
     it("numeric array -> pass", () => {
         pipe(
             arrayGood1,
-           Is.checkArray(Is.checkType("number")),
+           Is._checkArray(Is.checkType("number")),
            E.match(
                 () => expect.fail('fail'),
                 () => expect(true).to.equal(true),
@@ -174,7 +176,7 @@ describe("Array checking", () => {
     it("empty numeric array -> pass", () => {
         pipe(
             arrayGood2,
-           Is.checkArray(Is.checkType("number")),
+           Is._checkArray(Is.checkType("number")),
            E.match(
                 () => expect.fail('fail'),
                 () => expect(true).to.equal(true),
@@ -184,7 +186,7 @@ describe("Array checking", () => {
     it("string in array -> fail", () => {
         pipe(
             arrayBad1,
-           Is.checkArray(Is.checkType("number")),
+           Is._checkArray(Is.checkType("number")),
            E.match(
                 () => expect(true).to.equal(true),
                 () => expect.fail('fail'),    
@@ -198,7 +200,7 @@ describe("Set chcker", () => {
     it("All strings -> pass", () => {
         pipe(
             setGood1,
-           Is.checkSet(Is.checkType("string")),
+           Is._checkSet(Is.checkType("string")),
            E.match(
                 () => expect.fail('fail'),
                 () => expect(true).to.equal(true)
@@ -208,7 +210,7 @@ describe("Set chcker", () => {
     it("empty array -> pass", () => {
         pipe(
             setGood2,
-           Is.checkSet(Is.checkType("string")),
+           Is._checkSet(Is.checkType("string")),
            E.match(
                 () => expect.fail('fail'),
                 () => expect(true).to.equal(true)
@@ -218,7 +220,7 @@ describe("Set chcker", () => {
     it("numeric array -> fail", () => {
         pipe(
             setBad1,
-           Is.checkSet(Is.checkType("string")),
+           Is._checkSet(Is.checkType("string")),
            E.match(
                 () => expect(true).to.equal(true),
                 () => expect.fail('fail'),
@@ -257,6 +259,145 @@ describe("Example of multiple fields that need to pass", () => {
                 () => expect(true).to.equal(true),
                 () => expect.fail('fail'),
             )            
+        )
+    })
+})
+
+const a1 = [1, 2] 
+const a2 = { 1: 1, 2: 2 }
+const a3 = new Set([1, 2])
+
+describe("Check that a value is an array meeting some type fn", () => {
+    it("if array of numeric -> true", () => {
+        pipe(
+            a1,
+           Is._isArray,
+           E.match(
+                ()  => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+           )
+        )
+    })
+    it("if an object -> false", () => {
+        pipe(
+            a2,
+           Is._isArray,
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+    it("if an object -> false", () => {
+        pipe(
+            a3,
+           Is._isArray,
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+})
+
+describe("Check if a value is a set", () => {
+    it("if set -> true", () => {
+        pipe(
+            a3,
+           Is._isSet,
+           E.match(
+                ()  => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+           )
+        )
+    })
+    it("if array -> false", () => {
+        pipe(
+            a1,
+           Is._isSet,
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+    it("if object -> false", () => {
+        pipe(
+            a2,
+           Is._isSet,
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+})
+
+const v1 = [1,2,3]
+const v2 = ["hello"]
+const v3 = new Set([1,2,3])
+const v4 = new Set(["hello"])
+describe("Determine if an array of cerain type values", () => {
+    it("if numeric array -> true", () => {
+        pipe(
+           v1,
+           Is.isArrayWith(Is.checkType("number")),
+           E.match(
+                ()  => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+           )
+        )
+    })
+    it("if string array -> false", () => {
+        pipe(
+           v2,
+           Is.isArrayWith(Is.checkType("number")),
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+    it("if set -> false", () => {
+        pipe(
+           v3,
+           Is.isArrayWith(Is.checkType("number")),
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+})
+describe("Determine if an set of cerain type values", () => {
+    it("if numeric set -> true", () => {
+        pipe(
+           v3,
+           Is.isSetWith(Is.checkType("number")),
+           E.match(
+                ()  => expect.fail('fail'),
+                () => expect(true).to.equal(true),
+           )
+        )
+    })
+    it("if set string -> false", () => {
+        pipe(
+           v4,
+           Is.isSetWith(Is.checkType("number")),
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
+        )
+    })
+    it("if array -> false", () => {
+        pipe(
+           v1,
+           Is.isSetWith(Is.checkType("number")),
+           E.match(
+                () => expect(true).to.equal(true),
+                ()  => expect.fail('fail'),
+           )
         )
     })
 })
