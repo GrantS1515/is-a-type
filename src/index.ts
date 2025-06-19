@@ -12,13 +12,39 @@ export type ErrValue = {
     expectedValues: any[],
 }
 
+//export const errValue2String:
+//    (e: ErrValue) =>
+//    string =
+//    e =>
+//    `Err in the value expected. Given ${e.givenValue} but expecting ${e.expectedValues}`
+//
 export type ErrType = {
     name: "ErrType",
     givenValue: any,
     expectedValueType: CType,
 }
-
+//
+//export const errType2String:
+//    (e: ErrType) =>
+//    string =
+//    e =>
+//    `Err in the type expected. Given ${e.givenValue} but expecting ${e.expectedValueType}`
+//
 export type Err = ErrValue | ErrType
+//
+//export const err2String:
+//    (e: Err) =>
+//    string =
+//    e => {
+//        switch(e.name) {
+//            case "ErrValue":
+//               return errValue2String(e) 
+//            case "ErrType":
+//                return errType2String(e)
+//            default:
+//                return "Error in conversion to string"
+//        } 
+//    }
 
 // check a set of values defined in the type
 export const checkValues:
@@ -85,7 +111,7 @@ const eMonoid: M.Monoid<E.Either<Err,any>> = {
 // check an array
 export const checkArray:
     (checker: Check) =>
-    (arr: any) =>
+    (arr: any[]) =>
     E.Either<Err, any> =
     checker =>
     arr =>
@@ -98,7 +124,7 @@ export const checkArray:
 // check a set
 export const checkSet:
     (checker: Check) =>
-    (st: any) =>
+    (st: Set<any>) =>
     E.Either<Err, any> =
     checker =>
     st =>

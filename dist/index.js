@@ -2,6 +2,20 @@ import { pipe } from 'fp-ts/lib/function.js';
 import * as E from "fp-ts/lib/Either.js";
 import * as B from "fp-ts/lib/boolean.js";
 import * as A from "fp-ts/lib/Array.js";
+//
+//export const err2String:
+//    (e: Err) =>
+//    string =
+//    e => {
+//        switch(e.name) {
+//            case "ErrValue":
+//               return errValue2String(e) 
+//            case "ErrType":
+//                return errType2String(e)
+//            default:
+//                return "Error in conversion to string"
+//        } 
+//    }
 // check a set of values defined in the type
 export const checkValues = vals => a => pipe(vals.includes(a), B.match(() => E.left(({ name: "ErrValue", givenValue: a, expectedValues: vals })), () => E.right(a)));
 // check for the standard base types
