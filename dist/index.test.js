@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { pipe } from 'fp-ts/lib/function.js';
 import * as E from "fp-ts/lib/Either.js";
 import * as Is from "./index.js";
+import * as Op from "fp-ts/lib/Option.js";
 const thereGood1 = "there";
 const thereFail = "th";
 const isThere = a => pipe(a, Is.checkValues(["there", "their"]), E.map((s) => s));
@@ -141,20 +142,21 @@ describe("Determine if an set of cerain type values", () => {
         pipe(v1, Is.isSetWith(Is.checkType("number")), E.match(() => expect(true).to.equal(true), () => expect.fail('fail')));
     });
 });
-//const oSomeNum = Op.some(1)
-//const oNone = Op.none
-//const o1 = {a: 1}
-//const o2 = [1,2]
-//
-//describe("Check if the value is an option", () => {
-//    it("op some -> true", () => {
-//        pipe(
-//            oSomeNum,
-//           Is._isSomeOp, 
-//           E.match(
-//                ()  => expect.fail('fail'),
-//                () => expect(true).to.equal(true),
-//           )
-//        )
-//    })
-//})
+const oSomeNum = Op.some(1);
+const oNone = Op.none;
+const o1 = { a: 1 };
+const o2 = [1, 2];
+describe("Check if the value is an option", () => {
+    it("op some -> true", () => {
+        pipe(oSomeNum, Is.isOp, E.match(() => expect.fail('fail'), () => expect(true).to.equal(true)));
+    });
+    it("op none -> true", () => {
+        pipe(oNone, Is.isOp, E.match(() => expect.fail('fail'), () => expect(true).to.equal(true)));
+    });
+    it("random obj -> false", () => {
+        pipe(o1, Is.isOp, E.match(() => expect(true).to.equal(true), () => expect.fail('fail')));
+    });
+    it("random obj -> false", () => {
+        pipe(o2, Is.isOp, E.match(() => expect(true).to.equal(true), () => expect.fail('fail')));
+    });
+});

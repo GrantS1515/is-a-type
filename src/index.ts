@@ -28,7 +28,12 @@ export type NotSetErr = {
     given: any,
 }
 
-export type Err = ErrValue | ErrType | NotArrayErr | NotSetErr
+
+export type NotOpErr = {
+    name: "NotOpErr",
+}
+
+export type Err = ErrValue | ErrType | NotArrayErr | NotSetErr | NotOpErr
 
 // check a set of values defined in the type
 export const checkValues:
@@ -174,5 +179,51 @@ export const isSetWith:
       E.chain(_checkSet(check))
     )
 
+const opMonoid: M.Monoid<E.Either<NotOpErr,Op.Option<any>>> = {
+    concat: (a, b) => {
+        if ( E.isRight(a) ) {
+            return a
+        } else  if ( E.isRight(b) ){
+            return b 
+        } else {
+            return a 
+        }
+    },
 
+    empty: E.left({ name: "NotOpErr"})
+}
+
+const _isSome:
+    (a: any) =>
+    E.Either<NotOpErr, Op.Some<any> > =
+     a =>
+    pipe(
+        a._tag === 'Some' && a.value !== undefined,
+        B.match(
+            () => E.left({name: "NotOpErr"}),
+            () => E.right(a)
+        )
+    )
+
+const _isNone:
+    (a: any) =>
+    E.Either<NotOpErr, Op.Some<any> > =
+     a =>
+    pipe(
+        a._tag === 'None' && a.value === undefined,
+        B.match(
+            () => E.left({name: "NotOpErr"}),
+            () => E.right(a)
+        )
+    )
+
+export const isOp:
+    (a: any) =>
+    E.Either<NotOpErr, Op.Option<any> >= 
+    a =>
+    pipe(
+        [_isSome, _isNone],
+        A.map(fn => fn(a)),
+        M.concatAll( opMonoid ),
+    )
 

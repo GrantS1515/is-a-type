@@ -2,6 +2,7 @@ import { pipe } from 'fp-ts/lib/function.js';
 import * as E from "fp-ts/lib/Either.js";
 import * as B from "fp-ts/lib/boolean.js";
 import * as A from "fp-ts/lib/Array.js";
+import * as M from "fp-ts/lib/Monoid.js";
 // check a set of values defined in the type
 export const checkValues = vals => a => pipe(vals.includes(a), B.match(() => E.left(({ name: "ErrValue", givenValue: a, expectedValues: vals })), () => E.right(a)));
 // check for the standard base types
@@ -30,3 +31,20 @@ export const _isArray = a => pipe(a, Array.isArray, B.match(() => E.left({ name:
 export const _isSet = a => pipe(a instanceof Set, B.match(() => E.left({ name: 'NotSetErr', given: a }), () => E.right(a)));
 export const isArrayWith = check => a => pipe(a, _isArray, E.chain(_checkArray(check)));
 export const isSetWith = check => a => pipe(a, _isSet, E.chain(_checkSet(check)));
+const opMonoid = {
+    concat: (a, b) => {
+        if (E.isRight(a)) {
+            return a;
+        }
+        else if (E.isRight(b)) {
+            return b;
+        }
+        else {
+            return a;
+        }
+    },
+    empty: E.left({ name: "NotOpErr" })
+};
+const _isSome = a => pipe(a._tag === 'Some' && a.value !== undefined, B.match(() => E.left({ name: "NotOpErr" }), () => E.right(a)));
+const _isNone = a => pipe(a._tag === 'None' && a.value === undefined, B.match(() => E.left({ name: "NotOpErr" }), () => E.right(a)));
+export const isOp = a => pipe([_isSome, _isNone], A.map(fn => fn(a)), M.concatAll(opMonoid));
